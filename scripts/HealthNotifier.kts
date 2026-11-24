@@ -1,22 +1,19 @@
-// ==========================================
-// HealthNotifier.kts — Оповещение при низком HP
-// ==========================================
+// HealthNotifier.kts — предупреждение в чат при низком здоровье.
 
-import me.collective.category.Category
+import me.collective.client.modules.ModuleCategory
 
-val healthMod = ctx.module("HealthNotifier", Category.COMBAT, "Оповещает звуком и сообщением в чат при падении здоровья ниже порога")
+val healthMod = ctx.module("HealthNotifier", ModuleCategory.COMBAT, "Предупреждает о низком здоровье")
 
-var lastAlertTime = 0L
+var lastAlert = 0L
 
 healthMod.onTick { mod ->
     val player = mc.player ?: return@onTick
     val health = player.health
-
     val now = System.currentTimeMillis()
-    if (health <= 6.0f && (now - lastAlertTime > 3000L)) {
-        lastAlertTime = now
-        print("§c[ОПАСНОСТЬ] §eВаше здоровье критически низко: §4" + String.format("%.1f", health) + " HP!")
+    if (health <= 6.0f && now - lastAlert > 3000L) {
+        lastAlert = now
+        ctx.print("§cЗдоровье низкое: " + String.format("%.1f", health) + " HP")
     }
 }
 
-print("Скрипт HealthNotifier.kts успешно загружен!")
+ctx.print("HealthNotifier загружен")

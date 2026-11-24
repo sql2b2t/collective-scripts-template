@@ -1,107 +1,87 @@
-# Collective Client — Kotlin Scripts Template & Documentation
+# Collective Client — шаблон скриптов на Kotlin
 
-Официальный репозиторий документации, руководств и готовых скриптов на **Kotlin (`.kts`)** для **Collective Client** (Minecraft 1.21.11 Fabric).
+collective client - клиент для копий 2b2t (Minecraft 1.21.11, Fabric).
 
-Скриптовый движок Collective Client позволяет создавать собственные чит-модули, макросы, перехватчики сетевых пакетов и автоматизацию без компиляции JAR-файлов — прямо на лету! Измените файл в текстовом редакторе, выполните команду `.scripts reload`, и изменения применятся мгновенно!
+Скрипты `.kts` работают во встроенном скриптовом движке клиента.
+Скрипт регистрирует модули, команды и элементы HUD: они появляются в ClickGUI,
+сохраняются в конфиг и выгружаются без следа. Правки применяются без
+перезапуска игры: `.script reload`.
 
----
-
-## 🚀 Возможности скриптов
-
-- ⚡ **Мгновенная горячая перезагрузка (`Hot-Reload`)** — никаких перезапусков игры или компиляций Gradle!
-- 🧩 **Полноценная интеграция в ClickGUI** — скриптовые модули отображаются в стандартном интерфейсе клиента, поддерживают бинды клавиш и сохранение состояния.
-- 📦 **Доступ к Minecraft Client API** — прямое управление игроком, миром, инвентарем и сущностями через объект `mc`.
-- 🌐 **Сетевой перехват пакетов** — поддержка обработки и отмены пакетов в реальном времени (`onPacketSend`, `onPacketReceive`).
-- 🤖 **Связка с AI MCP Server** — модули, созданные в скриптах, мгновенно становятся видны нейросетям через встроенный MCP сервер Collective Client!
-
----
-
-## 📁 Структура Репозитория
+## Структура
 
 ```text
 collective-scripts-template/
 ├── docs/
-│   └── API_REFERENCE.md      # Полная техническая документация API
+│   └── API_REFERENCE.md      описание API движка
 ├── scripts/
-│   ├── AutoJump.kts          # Автоматический прыжок при беге вперед
-│   ├── PacketLogger.kts      # Логирование сетевых пакетов клиента и сервера
-│   ├── HealthNotifier.kts    # Оповещение и предупреждение при низком HP
-│   └── CoordNotifier.kts     # Мониторинг и вывод координат игрока
-└── README.md                 # Это руководство
+│   ├── AutoJump.kts          прыжок при движении вперёд
+│   ├── PacketLogger.kts      имена пакетов в лог клиента
+│   ├── HealthNotifier.kts    предупреждение при низком здоровье
+│   ├── CoordNotifier.kts     координаты раз в 10 секунд
+│   ├── CombatAssistant.kts   наводка и атака ближайшей цели
+│   ├── CustomRadarHUD.kts    HUD со счётчиком сущностей и команда .saycoords
+│   └── ImageHUD.kts          простой HUD на drawText
+└── README.md
 ```
 
----
+## Установка
 
-## 📥 Как использовать скрипты в игре
+1. Открой папку скриптов командой `.script folder`
+   (или вручную: `.minecraft/collective/scripts/`).
+2. Скопируй нужные `.kts` из папки `scripts/` в эту папку.
+3. Выполни `.script reload`.
+4. Включи модуль в ClickGUI (правый Shift по умолчанию).
 
-1. Откройте папку скриптов Collective Client:
-   - В чате игры напишите команду:
-     ```
-     .scripts folder
-     ```
-   - Либо откройте путь вручную:
-     ```text
-     .minecraft/collective/scripts/
-     ```
-2. Поместите любые `.kts` файлы из папки `scripts/` этого репозитория в папку `.minecraft/collective/scripts/`.
-3. В чате игры выполните:
-   ```
-   .scripts reload
-   ```
-4. Откройте ClickGUI (по умолчанию правый `Shift` или `RShift`) — ваши новые модули появятся в соответствующих вкладках!
+## Команды
 
----
+| Команда | Что делает |
+|---|---|
+| `.script list` | список скриптов и ошибки загрузки |
+| `.script load <имя>` | загрузить скрипт |
+| `.script unload <имя>` | выгрузить скрипт вместе с его модулями и командами |
+| `.script reload` | перезагрузить все скрипты |
+| `.script delete <имя>` | удалить файл скрипта |
+| `.script examples` | создать встроенные примеры в папке скриптов |
+| `.script folder` | открыть папку скриптов |
 
-## 💡 Примеры Скриптов
+## Примеры
 
-### 1. Простой модуль: Авто-прыжок (`AutoJump.kts`)
+### Модуль с тиком (AutoJump.kts)
+
 ```kotlin
-import me.collective.category.Category
+import me.collective.client.modules.ModuleCategory
 
-val jumpMod = ctx.module("AutoJump", Category.MOVEMENT, "Автоматически прыгает при беге")
+val jumpMod = ctx.module("AutoJump", ModuleCategory.MOVEMENT, "Прыгает при движении вперёд")
 
 jumpMod.onTick { mod ->
     val player = mc.player ?: return@onTick
-    if (player.isOnGround && mc.options.forwardKey.isPressed && !player.isSneaking) {
-        player.jump()
+    if (player.onGround() && mc.options.keyUp.isDown && !player.isShiftKeyDown) {
+        player.jumpFromGround()
     }
 }
-
-print("AutoJump загружен!")
 ```
 
-### 2. Перехват и фильтрация пакетов (`PacketLogger.kts`)
-```kotlin
-import me.collective.category.Category
+### Перехват пакетов (PacketLogger.kts)
 
-val packetMod = ctx.module("PacketLogger", Category.MISC, "Логирует сетевые пакеты")
+```kotlin
+import me.collective.client.modules.ModuleCategory
+
+val packetMod = ctx.module("PacketLogger", ModuleCategory.MISC, "Пишет имена пакетов в лог")
 
 packetMod.onPacketSend { event ->
-    val packetName = event.packet.javaClass.simpleName
-    if (!packetName.contains("Move")) {
-        log("[SEND] " + packetName)
-    }
+    ctx.log("[SEND] " + event.packet.javaClass.simpleName)
 }
 ```
 
----
+Про вывод: пиши в чат через `ctx.print(...)`, в лог клиента через `ctx.log(...)`.
+Глобальных функций `print()` и `log()` в скриптах нет: эти имена перекрываются
+стандартной библиотекой Kotlin, и вызов `log(...)` вообще не даст скрипту
+загрузиться.
 
-## 🎮 Команды скриптов в игре
+## API
 
-| Команда | Описание |
-|---------|----------|
-| `.scripts list` | Выводит список всех найденных скриптов и их статус (`[АКТИВЕН]` / `[ВЫКЛЮЧЕН]`) |
-| `.scripts load <имя>` | Загружает и активирует конкретный скрипт (расширение `.kts` можно не указывать) |
-| `.scripts unload <имя>` | Выгружает конкретный скрипт и корректно удаляет все созданные им модули/команды/HUD |
-| `.scripts reload` | Горячая перезагрузка всех скриптов из папки `.minecraft/collective/scripts/` |
-| `.scripts folder` | Открывает системную папку скриптов в проводнике |
+Все классы, методы и события: [docs/API_REFERENCE.md](docs/API_REFERENCE.md).
 
----
+## Лицензия
 
-## 📖 Полная документация API
-Подробное описание всех методов, классов и доступных полей читайте в файле [API_REFERENCE.md](docs/API_REFERENCE.md).
-
----
-
-## 📄 Лицензия
-MIT License. Создавайте, делитесь и модифицируйте любые скрипты без ограничений.
+MIT.

@@ -1,34 +1,26 @@
-// ==========================================
-// CustomRadarHUD.kts — Кастомный скриптовый HUD
-// ==========================================
+// CustomRadarHUD.kts — HUD со счётчиком сущностей и команда .saycoords.
 
-import me.collective.font.FontManager
-import me.collective.render.RenderUtil
-import java.awt.Color
+val radar = ctx.hud("CustomRadarHUD", "Счётчик сущностей рядом", 10.0f, 150.0f)
+radar.setSize(120.0f, 32.0f)
 
-// Регистрируем кастомный визуальный элемент HUD с координатами по умолчанию
-val radarHud = ctx.hud("ScriptRadar", "Отображает радар сущностей через скрипт", 10.0f, 150.0f)
-radarHud.setSize(120.0f, 40.0f)
-
-radarHud.onRender { context, delta ->
+radar.onRender { poses, delta ->
     val player = mc.player ?: return@onRender
-    val world = mc.world ?: return@onRender
+    val level = mc.level ?: return@onRender
 
-    val count = world.entities.count { it != player && it.isAlive }
+    var count = 0
+    for (entity in level.entitiesForRendering()) {
+        if (entity != player && entity.isAlive) count++
+    }
 
-    // Отрисовка стильной подложки с границей
-    RenderUtil.drawRect(context, 0.0f, 0.0f, 120.0f, 32.0f, Color(20, 20, 25, 180).rgb)
-    RenderUtil.drawOutline(context, 0.0f, 0.0f, 120.0f, 32.0f, 1.0f, Color(130, 80, 240, 220).rgb)
-
-    // Текстовая информация
-    FontManager.INSTANCE.drawString(context, "§d⚡ Script Radar", 5.0f, 4.0f, Color.WHITE)
-    FontManager.INSTANCE.drawString(context, "§7Сущностей рядом: §f$count", 5.0f, 18.0f, Color(220, 220, 220))
+    radar.drawText(poses, "Radar", 2.0f, 2.0f, 0xFFFFFFFF.toInt())
+    radar.drawText(poses, "Entities: " + count, 2.0f, 18.0f, 0xFFCCCCCC.toInt())
 }
 
-// Регистрируем кастомную команду чата
-ctx.command("saycoords", "Отправляет координаты в чат", { args ->
-    val p = mc.player ?: return@command
-    ctx.sendChatMessage("Мои координаты: X=${p.blockX} Y=${p.blockY} Z=${p.blockZ}")
-}, "coordsay", "sc")
+// своя команда чата: .saycoords (алиас .sc)
+ctx.command("saycoords", "Пишет координаты в чат", { args ->
+    val player = mc.player ?: return@command
+    val pos = player.blockPosition()
+    ctx.sendChatMessage("coords " + pos.x + " " + pos.y + " " + pos.z)
+}, "sc")
 
-print("Скрипт CustomRadarHUD.kts успешно загружен!")
+ctx.print("CustomRadarHUD загружен")

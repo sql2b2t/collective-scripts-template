@@ -1,25 +1,19 @@
-// ==========================================
-// CoordCopier.kts — Копирование координат игрока
-// ==========================================
+// CoordNotifier.kts — координаты игрока в чат раз в 10 секунд.
 
-import me.collective.category.Category
+import me.collective.client.modules.ModuleCategory
 
-val coordMod = ctx.module("CoordNotifier", Category.RENDER, "Отображает и логирует текущие координаты")
+val coordMod = ctx.module("CoordNotifier", ModuleCategory.RENDER, "Пишет координаты раз в 10 секунд")
 
-var lastSecond = 0L
+var lastReport = 0L
 
 coordMod.onTick { mod ->
     val player = mc.player ?: return@onTick
     val now = System.currentTimeMillis()
-
-    // Раз в 10 секунд
-    if (now - lastSecond > 10000L) {
-        lastSecond = now
-        val x = player.blockX
-        val y = player.blockY
-        val z = player.blockZ
-        print("§7Ваши координаты: §bX: §f$x §bY: §f$y §bZ: §f$z")
+    if (now - lastReport > 10000L) {
+        lastReport = now
+        val pos = player.blockPosition()
+        ctx.print("§7Координаты: §b" + pos.x + " " + pos.y + " " + pos.z)
     }
 }
 
-print("Скрипт CoordNotifier.kts успешно загружен!")
+ctx.print("CoordNotifier загружен")

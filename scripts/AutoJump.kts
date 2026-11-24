@@ -1,27 +1,23 @@
-// ==========================================
-// AutoJump.kts — Автоматический прыжок при беге
-// ==========================================
+// AutoJump.kts — прыжок при движении вперёд.
+// Модуль появится в ClickGUI в категории MOVEMENT.
 
-import me.collective.category.Category
+import me.collective.client.modules.ModuleCategory
 
-val jumpMod = ctx.module("AutoJump", Category.MOVEMENT, "Автоматически прыгает при зажатой клавише бега вперед")
+val jumpMod = ctx.module("AutoJump", ModuleCategory.MOVEMENT, "Прыгает при движении вперёд")
 
-jumpMod.onEnable {
-    print("§aAutoJump включен!")
+jumpMod.onEnable { mod ->
+    ctx.print("AutoJump включен")
 }
 
-jumpMod.onDisable {
-    print("§cAutoJump выключен.")
+jumpMod.onDisable { mod ->
+    ctx.print("AutoJump выключен")
 }
 
 jumpMod.onTick { mod ->
     val player = mc.player ?: return@onTick
-    val options = mc.options
-
-    // Если игрок на земле и нажата кнопка движения вперед — прыгаем
-    if (player.isOnGround && options.forwardKey.isPressed && !player.isSneaking) {
-        player.jump()
+    if (player.onGround() && mc.options.keyUp.isDown && !player.isShiftKeyDown) {
+        player.jumpFromGround()
     }
 }
 
-print("Скрипт AutoJump.kts успешно загружен!")
+ctx.print("AutoJump загружен")

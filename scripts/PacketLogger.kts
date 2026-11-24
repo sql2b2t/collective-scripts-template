@@ -1,28 +1,23 @@
-// ==========================================
-// PacketLogger.kts — Логирование сетевых пакетов
-// ==========================================
+// PacketLogger.kts — имена отправленных и полученных пакетов в лог клиента.
+// Лог видно в консоли игры (не в чате).
 
-import me.collective.category.Category
+import me.collective.client.modules.ModuleCategory
 
-val packetMod = ctx.module("PacketLogger", Category.MISC, "Логирует отправленные и полученные пакеты Minecraft")
-
-packetMod.onEnable {
-    print("§aPacketLogger активирован!")
-}
+val packetMod = ctx.module("PacketLogger", ModuleCategory.MISC, "Пишет имена пакетов в лог")
 
 packetMod.onPacketSend { event ->
-    val packetName = event.packet.javaClass.simpleName
-    // Фильтруем слишком частые пакеты движения для чистоты лога
-    if (!packetName.contains("Move") && !packetName.contains("PlayerInput")) {
-        log("[SEND] " + packetName)
+    val name = event.packet.javaClass.simpleName
+    // пакеты движения слишком частые, их не логируем
+    if (!name.contains("Move")) {
+        ctx.log("[SEND] " + name)
     }
 }
 
 packetMod.onPacketReceive { event ->
-    val packetName = event.packet.javaClass.simpleName
-    if (!packetName.contains("Chunk") && !packetName.contains("EntityPosition")) {
-        log("[RECV] " + packetName)
+    val name = event.packet.javaClass.simpleName
+    if (!name.contains("Chunk")) {
+        ctx.log("[RECV] " + name)
     }
 }
 
-print("Скрипт PacketLogger.kts успешно загружен!")
+ctx.print("PacketLogger загружен")
